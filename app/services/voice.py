@@ -1467,3 +1467,49 @@ def tts_multiple(task_id: str, list_script: list, voice_name: str, voice_rate: f
             logger.info(f"已生成音频文件: {audio_file}")
 
     return tts_results
+
+
+
+if __name__ == "__main__":
+    import json
+
+    # 加载原始 JSON 文件
+    with open(r"D:\newbegin\NarratoAI\resource\scripts\video_story.json", "r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    # 转换为 voice.py 所需的格式
+    list_script = []
+    for item in data["plot_titles"]:
+        list_script.append({
+            "_id": item["title"],  # 使用标题作为唯一标识符
+            "timestamp": item["timestamp"].replace(",", ":"),  # 替换逗号为冒号（00:00:00,000 → 00:00:00:000）
+            "narration": item["content"],  # 使用 content 作为文本
+            "OST": 0  # 标记为非背景音乐
+        })
+
+    # 保存为新的 JSON 文件（可选）
+    with open(r"D:\newbegin\NarratoAI\resource\scripts\voice_script.json", "w", encoding="utf-8") as file:
+        json.dump(list_script, file, ensure_ascii=False, indent=4)
+    with open(r"D:\newbegin\NarratoAI\resource\scripts\voice_script.json", "r", encoding="utf-8") as file:
+        list_script = json.load(file)
+    task_id = "video_story"  # 任务ID（用于生成输出目录）
+    voice_name = "zh-CN-XiaoxiaoNeural-Female"  # 中文女声语音
+    voice_rate = 1.0  # 语音速率（1.0为正常）
+    voice_pitch = 1.0  # 语音音高（1.0为正常）
+
+    # 生成音频和字幕
+    results = tts_multiple(
+        task_id=task_id,
+        list_script=list_script,
+        voice_name=voice_name,
+        voice_rate=voice_rate,
+        voice_pitch=voice_pitch
+    )
+
+    # 打印结果
+    print("生成的音频和字幕文件：")
+    for item in results:
+        print(f"文本: {item['text']}")
+        print(f"音频: {item['audio_file']}")
+        print(f"字幕: {item['subtitle_file']}")
+        print(f"时长: {item['duration']}秒\n")

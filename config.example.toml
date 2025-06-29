@@ -37,7 +37,7 @@
     #   gemini (谷歌, 需要 VPN)
     #   qwen (通义千问)
     #   moonshot (月之暗面)
-    text_llm_provider="openai"
+    text_llm_provider="deepseek"
 
     ########## OpenAI API Key
     # Get your API key at https://platform.openai.com/api-keys
@@ -73,6 +73,36 @@
     text_moonshot_api_key=""
     text_moonshot_base_url = "https://api.moonshot.cn/v1"
     text_moonshot_model_name = "moonshot-v1-8k"
+
+
+    # 用于生成视频的大模型支持的提供商 (Supported providers):
+
+    video_llm_provider="Step-Video-T2V"
+
+    ########## OpenAI API Key
+    # Get your API key at https://platform.openai.com/api-keys
+    video_Step-Video-T2V_api_key = ""
+    video_Step-Video-T2V_base_url = "https://api.step-video.ai/v1"
+    video_Step-Video-T2V_model_name = "gpt-4.1-mini-2025-04-14"
+
+    # 使用 硅基流动 第三方 API Key，使用手机号注册：https://cloud.siliconflow.cn/i/pyOKqFCV
+    # 访问 https://cloud.siliconflow.cn/account/ak 获取你的 API 密钥
+    video_Open-Sora-Plan_api_key = ""
+    video_Open-Sora-Plan_base_url = "https://api.siliconflow.cn/v1"
+    video_Open-Sora-Plan_model_name = "deepseek-ai/DeepSeek-R1"
+
+    ########## DeepSeek API Key
+    # 访问 https://platform.deepseek.com/api_keys 获取你的 API 密钥
+    video_CogVideoX_api_key = ""
+    video_CogVideoX_base_url = "https://api.deepseek.com"
+    video_CogVideoX_model_name = "deepseek-chat"
+
+    ########## DeepSeek API Key
+    # 访问 https://platform.deepseek.com/api_keys 获取你的 API 密钥
+    video_Seedance-Pro_api_key = ""
+    video_Seedance-Pro_base_url = "https://api.deepseek.com"
+    video_Seedance-Pro_model_name = "deepseek-chat"
+
 
     # webui界面是否显示配置项
     hide_config = true

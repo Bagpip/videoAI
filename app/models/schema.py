@@ -341,7 +341,10 @@ class VideoClipParams(BaseModel):
     video_aspect: Optional[VideoAspect] = Field(default=VideoAspect.portrait.value, description="视频比例")
     video_language: Optional[str] = Field(default="zh-CN", description="视频语言")
 
-    # video_clip_duration: Optional[int] = 5      # 视频片段时长
+    video_quality: Optional[str] = Field(default="1080p", description="视频质量")
+    video_clip_duration: Optional[int] = 5      # 视频片段时长
+    video_fps: Optional[int] = Field(default=24, description="视频帧率")
+
     # video_count: Optional[int] = 1      # 视频片段数量
     # video_source: Optional[str] = "local"
     # video_concat_mode: Optional[VideoConcatMode] = VideoConcatMode.random.value

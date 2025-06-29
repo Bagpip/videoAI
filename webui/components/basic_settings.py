@@ -5,15 +5,16 @@ import os
 from app.config import config
 from app.utils import utils
 from loguru import logger
-
+from openai import OpenAI
 
 def render_basic_settings(tr):
     """渲染基础设置面板"""
     with st.expander(tr("Basic Settings"), expanded=False):
-        config_panels = st.columns(3)
+        config_panels = st.columns(4)
         left_config_panel = config_panels[0]
         middle_config_panel = config_panels[1]
         right_config_panel = config_panels[2]
+        video_gen_panel = config_panels[3]  # 新增第4列
 
         with left_config_panel:
             render_language_settings(tr)
@@ -25,6 +26,8 @@ def render_basic_settings(tr):
         with right_config_panel:
             render_text_llm_settings(tr)  # 文案生成模型设置
 
+        with video_gen_panel:  # 新增视频生成模型设置
+            render_video_gen_settings(tr)  # 新增函数
 
 def render_language_settings(tr):
     st.subheader(tr("Proxy Settings"))
@@ -136,7 +139,7 @@ def test_vision_model_connection(api_key, base_url, model_name, provider, tr):
 
             response = client.chat.completions.create(
                 model=model_name,
-                messages=[
+                messages = [
                     {
                         "role": "system",
                         "content": [{"type": "text", "text": "You are a helpful assistant."}],
@@ -381,3 +384,168 @@ def render_text_llm_settings(tr):
     #     )
     #     if st_account_id:
     #         config.app[f"text_{text_provider}_account_id"] = st_account_id
+
+
+def test_video_model_connection(api_key, base_url, model_name, provider, tr):
+    """测试视频生成模型连接
+
+    Args:
+        api_key: API密钥
+        base_url: 基础URL
+        model_name: 模型名称
+        provider: 提供商名称
+
+    Returns:
+        bool: 连接是否成功
+        str: 测试结果消息
+    """
+    try:
+        import requests
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+
+        # Step-Video-T2V 测试
+        if provider == "t2v":
+            test_url = f"{base_url}/health"
+            res = requests.get(test_url, headers=headers, timeout=10)
+            if res.status_code == 200:
+                return True, tr("Step-Video服务可用")
+
+        # Open-Sora-Plan 测试
+        elif provider == "sora":
+            test_url = f"{base_url}/v1/models"
+            res = requests.get(test_url, timeout=10)
+            if res.status_code == 200:
+                return True, tr("Open-Sora服务正常")
+
+        # 商业化API测试
+        elif provider == "seedance":
+
+            client = OpenAI(
+                base_url=base_url,
+                api_key=api_key,
+            )
+
+            response = client.chat.completions.create(
+                # 指定您创建的方舟推理接入点 ID，此处已帮您修改为您的推理接入点 ID
+                model=model_name,
+                messages=[{
+                        "role": "user",
+                        "content": [{"type": "image_url","image_url": {
+                                    "url": "https://ark-project.tos-cn-beijing.ivolces.com/images/view.jpeg"
+                                },
+                            },
+                            {"type": "text", "text": "回复我网络可用即可"},
+                        ],
+                    }
+                ],
+            )
+            if response and response.choices:
+                return True, tr("模型可用")
+            else:
+                return False, tr("模型不可用")
+
+        return False, tr("未知错误：") + str(res.text) if res else tr("无响应")
+
+    except Exception as e:
+        return False, tr("连接异常：") + str(e)
+
+
+def render_video_gen_settings(tr):
+    """渲染视频生成模型设置"""
+    st.subheader(tr("Video Generation Model Settings"))
+
+    # 视频生成模型提供商选择
+    video_providers = [
+        't2v',
+        'sora',
+        'seedance']
+
+    saved_video_provider = config.app.get("video_llm_provider", "seedance").lower()
+    saved_provider_index = 0
+
+    for i, provider in enumerate(video_providers):
+        if provider.lower() == saved_video_provider:
+            saved_provider_index = i
+            break
+
+    video_provider = st.selectbox(
+        tr("Video Model Provider"),
+        options=video_providers,
+        index=saved_provider_index
+    )
+    video_provider = video_provider.lower()
+    config.app["video_llm_provider"] = video_provider
+    st.session_state['video_llm_providers'] = video_provider
+
+    # 获取已保存的视频生成模型配置
+    video_api_key = config.app.get(f"video_{video_provider}_api_key")
+    video_base_url = config.app.get(f"video_{video_provider}_base_url")
+    video_model_name = config.app.get(f"video_{video_provider}_model_name")
+
+    # 渲染视频生成模型配置输入框
+    st_video_api_key = st.text_input(tr("Video API Key"), value=video_api_key, type="password")
+    # st_video_base_url = st.text_input(tr("Video Base URL"), value=video_base_url)
+    # st_video_model_name = st.text_input(tr("Video Model Name"), value=video_model_name)
+
+    # 根据不同提供商设置默认值和帮助信息
+    if video_provider == 't2v':
+        st_video_base_url = st.text_input(
+            tr("Video Base URL"),
+            value=video_base_url or "https://api.step-video.ai/v1",
+            help=tr("默认: Step-Video官方API端点")
+        )
+        st_video_model_name = st.text_input(
+            tr("Video Model Name"),
+            value=video_model_name or "step-video-t2v-30b",
+            help=tr("推荐: step-video-t2v-30b (300亿参数版)")
+        )
+    elif video_provider == 'sora':
+        st_video_base_url = st.text_input(
+            tr("Video Base URL"),
+            value=video_base_url or "https://open-sora.org/api/v1",
+            help="开源模型可自建服务"
+        )
+        st_video_model_name = st.text_input(
+            tr("Video Model Name"),
+            value=video_model_name or "open-sora-plan-v1.5",
+            help="支持长视频生成的DiT架构"
+        )
+    elif video_provider == 'seedance':
+        st_video_base_url = st.text_input(
+            tr("Video Base URL"),
+            value=video_base_url or "https://seedance.volcengine.com/api",
+            disabled=True,
+            help="火山引擎固定端点"
+        )
+        st_video_model_name = st.text_input(
+            tr("Video Model Name"),
+            value=video_model_name or "seedance-1.0-pro",
+            help="多镜头叙事模型"
+        )
+    else:
+        st_video_base_url = st.text_input(tr("Video Base URL"), value=video_base_url)
+        st_video_model_name = st.text_input(tr("Video Model Name"), value=video_model_name)
+
+    # 添加测试按钮
+    if st.button(tr("Test Connection"), key="test_video_connection"):
+        with st.spinner(tr("Testing connection...")):
+            success, message = test_video_model_connection(
+                api_key=st_video_api_key,
+                base_url=st_video_base_url,
+                model_name=st_video_model_name,
+                provider=video_provider,
+                tr=tr
+            )
+
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+
+    # 保存视频生成模型配置
+    if st_video_api_key:
+        config.app[f"video_{video_provider}_api_key"] = st_video_api_key
+    if st_video_base_url:
+        config.app[f"video_{video_provider}_base_url"] = st_video_base_url
+    if st_video_model_name:
+        config.app[f"video_{video_provider}_model_name"] = st_video_model_name

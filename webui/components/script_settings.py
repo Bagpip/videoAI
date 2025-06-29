@@ -12,6 +12,8 @@ from app.utils import utils, check_script
 from webui.tools.generate_script_docu import generate_script_docu
 from webui.tools.generate_script_short import generate_script_short
 from webui.tools.generate_short_summary import generate_script_short_sunmmary
+from webui.tools.generate_story import generate_story
+from webui.tools.generate_camera import generate_camera
 
 
 def render_script_panel(tr):
@@ -30,17 +32,25 @@ def render_script_panel(tr):
         script_path = st.session_state.get('video_clip_json_path', '')
 
         # 根据脚本类型显示不同的布局
-        if script_path == "auto":
+        if script_path == "storyboard":
+            # 分镜生成模式
+            st.session_state['generate_video_setting'] = True
+            render_story_details(tr)
+        elif script_path == "auto":
             # 画面解说
+            st.session_state['generate_video_setting'] = False
             render_video_details(tr)
         elif script_path == "short":
             # 短剧混剪
+            st.session_state['generate_video_setting'] = False
             render_short_generate_options(tr)
         elif script_path == "summary":
             # 短剧解说
+            st.session_state['generate_video_setting'] = False
             short_drama_summary(tr)
         else:
             # 默认为空
+            st.session_state['generate_video_setting'] = False
             pass
 
         # 渲染脚本操作按钮
@@ -51,6 +61,7 @@ def render_script_file(tr, params):
     """渲染脚本文件选择"""
     script_list = [
         (tr("None"), ""),
+        (tr("电影分镜生成"), "storyboard"),
         (tr("Auto Generate"), "auto"),
         (tr("Short Generate"), "short"),
         (tr("Short Drama Summary"), "summary"),
@@ -181,6 +192,25 @@ def render_video_file(tr, params):
                 time.sleep(1)
                 st.rerun()
 
+def render_story_details(tr):
+
+    story_clips_num = st.number_input(
+        tr("自定义分镜数量"),
+        min_value=1,
+        max_value=30,
+        value=st.session_state.get('story_clips_num', 5),
+        help=tr("设置需要生成的分镜数量"),
+        key="custom_clips_input"
+    )
+
+    story_prompt = st.text_area(
+        tr("文章输入"),
+        help=tr("小说内容输入"),
+        height=180
+    )
+    st.session_state['story_clips_num'] = story_clips_num
+    st.session_state['story_prompt'] = story_prompt
+
 
 def render_short_generate_options(tr):
     """
@@ -307,6 +337,8 @@ def render_script_buttons(tr, params):
         button_name = tr("Generate Short Video Script")
     elif script_path == "summary":
         button_name = tr("生成短剧解说脚本")
+    elif script_path == "storyboard":
+        button_name = tr("生成分镜脚本")
     elif script_path.endswith("json"):
         button_name = tr("Load Video Script")
     else:
@@ -326,30 +358,35 @@ def render_script_buttons(tr, params):
             video_theme = st.session_state.get('video_theme')
             temperature = st.session_state.get('temperature')
             generate_script_short_sunmmary(params, subtitle_path, video_theme, temperature)
+        elif script_path == "storyboard":
+            story_clips_num = st.session_state.get('story_clips_num')
+            story_prompt = st.session_state.get('story_prompt')
+            generate_story(tr, params, story_clips_num, story_prompt)
         else:
             load_script(tr, script_path)
 
     # 视频脚本编辑区
-    video_clip_json_details = st.text_area(
-        tr("Video Script"),
-        value=json.dumps(st.session_state.get('video_clip_json', []), indent=2, ensure_ascii=False),
-        height=180
-    )
+    if script_path != "storyboard":
+        video_clip_json_details = st.text_area(
+            tr("Video Script"),
+            value=json.dumps(st.session_state.get('video_clip_json', []), indent=2, ensure_ascii=False),
+            height=180
+        )
 
-    # 操作按钮行
-    button_cols = st.columns(3)
-    with button_cols[0]:
-        if st.button(tr("Check Format"), key="check_format", use_container_width=True):
-            check_script_format(tr, video_clip_json_details)
+        # 操作按钮行
+        button_cols = st.columns(3)
+        with button_cols[0]:
+            if st.button(tr("Check Format"), key="check_format", use_container_width=True):
+                check_script_format(tr, video_clip_json_details)
 
-    with button_cols[1]:
-        if st.button(tr("Save Script"), key="save_script", use_container_width=True):
-            save_script(tr, video_clip_json_details)
+        with button_cols[1]:
+            if st.button(tr("Save Script"), key="save_script", use_container_width=True):
+                save_script(tr, video_clip_json_details)
 
-    with button_cols[2]:
-        script_valid = st.session_state.get('script_format_valid', False)
-        if st.button(tr("Crop Video"), key="crop_video", disabled=not script_valid, use_container_width=True):
-            crop_video(tr, params)
+        with button_cols[2]:
+            script_valid = st.session_state.get('script_format_valid', False)
+            if st.button(tr("Crop Video"), key="crop_video", disabled=not script_valid, use_container_width=True):
+                crop_video(tr, params)
 
 
 def check_script_format(tr, script_content):

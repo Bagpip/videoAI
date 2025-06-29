@@ -126,7 +126,7 @@ def render_voice_parameters(tr):
 def render_voice_preview(tr, voice_name):
     """渲染语音试听功能"""
     if st.button(tr("Play Voice")):
-        play_content = "感谢关注 NarratoAI，有任何问题或建议，可以关注微信公众号，求助或讨论"
+        play_content = "你好我是NarratoAI，这里是语音试听功能"
         if not play_content:
             play_content = st.session_state.get('video_script', '')
         if not play_content:
