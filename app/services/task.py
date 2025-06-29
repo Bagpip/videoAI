@@ -154,9 +154,9 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
                        if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'))]
         tts_path = os.path.join(parent_parent_dir, 'storage', 'tasks', 'video_story')
         # 获取音频和字幕列表
-        tts_list = [os.path.join(tts_path, f) for f in os.listdir(videos_path)
+        tts_list = [os.path.join(tts_path, f) for f in os.listdir(tts_path)
                        if f.lower().endswith(('.mp3', '.wav'))]
-        srt_list = [os.path.join(tts_path, f) for f in os.listdir(videos_path)
+        srt_list = [os.path.join(tts_path, f) for f in os.listdir(tts_path)
                        if f.lower().endswith('.srt')]
         chip_video_list = []
         for index in len(range(video_list)):
@@ -228,8 +228,12 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
             # 写入合并后的文件
             with open(output_file, 'w', encoding='utf-8') as f:
                 f.write('\n\n'.join(merged_blocks))
+            return output_file
 
-        merge_srt_files(srt_list, output_file=merged_subtitle_path)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+        srt_path = os.path.join(parent_parent_dir, 'resource', 'srt', 'merged.srt')
+        merged_subtitle_path = merge_srt_files(srt_list, output_file=srt_path)
 
 
 
