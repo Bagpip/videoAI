@@ -14,7 +14,7 @@ from app.services import (llm, material, subtitle, video, voice, audio_merger,
 from app.services import state as sm
 from app.utils import utils
 import streamlit as st
-
+from generate_merger import generate_video_tts_srt
 
 
 def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: dict):
@@ -37,6 +37,7 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
     # # tts 角色名称
     # voice_name = voice.parse_voice_name(params.voice_name)
     if st.session_state.get('generate_video_setting'):
+        logger.info("\n\n## 1. 加载视频脚本")
         current_dir = os.path.dirname(os.path.abspath(__file__))
         parent_parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
         json_path = os.path.join(parent_parent_dir, 'resource', 'scripts', 'video_story.json')
@@ -56,7 +57,7 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
             })
 
         # 保存为新的 JSON 文件（可选）
-        voice_script_path = os.path.join(parent_parent_dir, 'resource', 'scripts', 'video_story.json')
+        voice_script_path = os.path.join(parent_parent_dir, 'resource', 'scripts', 'voice_script.json')
         with open(voice_script_path, "w", encoding="utf-8") as file:
             json.dump(list_script, file, ensure_ascii=False, indent=4)
         with open(voice_script_path, "r", encoding="utf-8") as file:
@@ -65,7 +66,7 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
         # voice_name = "zh-CN-XiaoxiaoNeural-Female"  # 中文女声语音
         # voice_rate = 1.0  # 语音速率（1.0为正常）
         # voice_pitch = 1.0  # 语音音高（1.0为正常）
-
+        logger.info("\n\n## 2. 生成音频和字幕")
         # 生成音频和字幕
         tts_results = voice.tts_multiple(
             task_id=task_id,
@@ -74,6 +75,7 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
             voice_rate=params.voice_rate,
             voice_pitch=params.voice_pitch,
         )
+        sm.state.update_task(task_id, state=const.TASK_STATE_PROCESSING, progress=20)
 
 
     else:
@@ -141,12 +143,35 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
     #             logger.warning(f"字幕文件无效: {merged_subtitle_path}")
     #
     # sm.state.update_task(task_id, state=const.TASK_STATE_PROCESSING, progress=40)
+    if st.session_state.get('generate_video_setting'):
+        logger.info("\n\n## 3. 匹配视频音频长度")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+        videos_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'output_videos')
+        # 获取视频目录列表
+        video_list = [os.path.join(videos_path, f) for f in os.listdir(videos_path)
+                       if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'))]
+        tts_path = os.path.join(parent_parent_dir, 'storage', 'tasks', 'video_story')
+        # 获取音频和字幕列表
+        tts_list = [os.path.join(tts_path, f) for f in os.listdir(videos_path)
+                       if f.lower().endswith(('.mp3', '.wav'))]
+        srt_list = [os.path.join(tts_path, f) for f in os.listdir(videos_path)
+                       if f.lower().endswith('.srt')]
+        chip_video_list = []
+        for index in len(range(video_list)):
+            chip_result = generate_video_tts_srt(video_origin_path = video_list[index],
+                                   tts_path = tts_list[index],
+                                   task_id = index)
+            chip_video_list.append(chip_result)
+        result[_id] = output_path
 
-    """
-    3. 裁剪视频 - 将超出音频长度的视频进行裁剪
-    """
-    logger.info("\n\n## 3. 裁剪视频")
-    video_clip_result = clip_video.clip_video(params.video_origin_path, tts_results)
+
+    else:
+        """
+        3. 裁剪视频 - 将超出音频长度的视频进行裁剪
+        """
+        logger.info("\n\n## 3. 裁剪视频")
+        video_clip_result = clip_video.clip_video(params.video_origin_path, tts_results)
     # 更新 list_script 中的时间戳
     tts_clip_result = {tts_result['_id']: tts_result['audio_file'] for tts_result in tts_results}
     subclip_clip_result = {
