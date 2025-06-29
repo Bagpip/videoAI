@@ -15,6 +15,7 @@ from app.services import state as sm
 from app.utils import utils
 import streamlit as st
 from generate_merger import generate_video_tts_srt
+from subtitle_merger import parse_time,format_time
 
 
 def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: dict):
@@ -163,7 +164,75 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
                                    tts_path = tts_list[index],
                                    task_id = index)
             chip_video_list.append(chip_result)
-        result[_id] = output_path
+
+
+        logger.info("\n\n## 4. 合并音频和字幕")
+        from pydub import AudioSegment
+
+        def simple_merge_mp3(files: list, output_path: str):
+            """简单合并多个MP3文件"""
+            combined = AudioSegment.empty()
+            for file in files:
+                sound = AudioSegment.from_mp3(file)
+                combined += sound
+            combined.export(output_path, format="mp3")
+            return output_path
+
+        # 使用示例
+        output = simple_merge_mp3(tts_list, merged_audio_path)
+        print(f"合并完成，输出文件: {output}")
+
+        import re
+        from datetime import timedelta
+        def merge_srt_files(srt_files, output_file="merged.srt"):
+            """合并多个 SRT 文件"""
+            merged_blocks = []
+            current_time = timedelta()
+            subtitle_index = 1
+
+            for file in srt_files:
+                with open(file, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+
+                # 分割字幕块（以空行分隔）
+                blocks = re.split(r'\n\s*\n', content)
+
+                for block in blocks:
+                    lines = block.strip().split('\n')
+                    if len(lines) < 3:  # 确保是有效的字幕块
+                        continue
+
+                    # 解析时间轴
+                    time_line = lines[1]
+                    start_str, end_str = time_line.split(' --> ')
+                    start_time = parse_time(start_str)
+                    end_time = parse_time(end_str)
+
+                    # 调整时间（累加偏移量）
+                    new_start = current_time + start_time
+                    new_end = current_time + end_time
+
+                    # 重新编号并存储
+                    merged_blocks.append(
+                        f"{subtitle_index}\n"
+                        f"{format_time(new_start)} --> {format_time(new_end)}\n"
+                        + "\n".join(lines[2:])
+                    )
+                    subtitle_index += 1
+
+                # 更新当前时间（下一个文件的起始时间 = 当前文件的结束时间）
+                last_block = blocks[-1]
+                last_end_str = last_block.split('\n')[1].split(' --> ')[1]
+                current_time += parse_time(last_end_str)
+
+            # 写入合并后的文件
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write('\n\n'.join(merged_blocks))
+
+        merge_srt_files(srt_list, output_file=merged_subtitle_path)
+
+
+
 
 
     else:
@@ -172,38 +241,38 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
         """
         logger.info("\n\n## 3. 裁剪视频")
         video_clip_result = clip_video.clip_video(params.video_origin_path, tts_results)
-    # 更新 list_script 中的时间戳
-    tts_clip_result = {tts_result['_id']: tts_result['audio_file'] for tts_result in tts_results}
-    subclip_clip_result = {
-        tts_result['_id']: tts_result['subtitle_file'] for tts_result in tts_results
-    }
-    new_script_list = update_script.update_script_timestamps(list_script, video_clip_result, tts_clip_result, subclip_clip_result)
+        # 更新 list_script 中的时间戳
+        tts_clip_result = {tts_result['_id']: tts_result['audio_file'] for tts_result in tts_results}
+        subclip_clip_result = {
+            tts_result['_id']: tts_result['subtitle_file'] for tts_result in tts_results
+        }
+        new_script_list = update_script.update_script_timestamps(list_script, video_clip_result, tts_clip_result, subclip_clip_result)
 
-    sm.state.update_task(task_id, state=const.TASK_STATE_PROCESSING, progress=60)
+        sm.state.update_task(task_id, state=const.TASK_STATE_PROCESSING, progress=60)
 
-    """
-    4. 合并音频和字幕
-    """
-    logger.info("\n\n## 4. 合并音频和字幕")
-    total_duration = sum([script["duration"] for script in new_script_list])
-    if tts_segments:
-        try:
-            # 合并音频文件
-            merged_audio_path = audio_merger.merge_audio_files(
-                task_id=task_id,
-                total_duration=total_duration,
-                list_script=new_script_list
-            )
-            logger.info(f"音频文件合并成功->{merged_audio_path}")
-            # 合并字幕文件
-            merged_subtitle_path = subtitle_merger.merge_subtitle_files(new_script_list)
-            logger.info(f"字幕文件合并成功->{merged_subtitle_path}")
-        except Exception as e:
-            logger.error(f"合并音频文件失败: {str(e)}")
-    else:
-        logger.warning("没有需要合并的音频/字幕")
-        merged_audio_path = ""
-        merged_subtitle_path = ""
+        """
+        4. 合并音频和字幕
+        """
+        logger.info("\n\n## 4. 合并音频和字幕")
+        total_duration = sum([script["duration"] for script in new_script_list])
+        if tts_segments:
+            try:
+                # 合并音频文件
+                merged_audio_path = audio_merger.merge_audio_files(
+                    task_id=task_id,
+                    total_duration=total_duration,
+                    list_script=new_script_list
+                )
+                logger.info(f"音频文件合并成功->{merged_audio_path}")
+                # 合并字幕文件
+                merged_subtitle_path = subtitle_merger.merge_subtitle_files(new_script_list)
+                logger.info(f"字幕文件合并成功->{merged_subtitle_path}")
+            except Exception as e:
+                logger.error(f"合并音频文件失败: {str(e)}")
+        else:
+            logger.warning("没有需要合并的音频/字幕")
+            merged_audio_path = ""
+            merged_subtitle_path = ""
 
     """
     5. 合并视频

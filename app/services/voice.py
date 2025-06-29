@@ -1469,7 +1469,6 @@ def tts_multiple(task_id: str, list_script: list, voice_name: str, voice_rate: f
     return tts_results
 
 
-
 if __name__ == "__main__":
     import json
 
