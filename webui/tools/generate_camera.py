@@ -86,9 +86,10 @@ def generate_camera(tr, params) -> dict:
                 if status == "succeeded":
                     video_url = get_result.content.video_url
                     from tqdm import tqdm
+
                     output_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'output_videos')
                     if not os.path.exists(output_path):
-                        os.mkdir('output_videos')  # 创建单层目录
+                        os.makedirs(output_path)  # 递归创建目录
                     save_path = os.path.join(output_path, f"generated_video_{camera_id}.mp4")
                     response = requests.get(video_url, stream=True)
                     total_size = int(response.headers.get("content-length", 0))

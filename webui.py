@@ -138,15 +138,15 @@ def render_generate_button():
         config.save_config()
         task_id = st.session_state.get('task_id')
 
-        if not task_id:
-            st.error(tr("请先裁剪视频"))
-            return
-        if not st.session_state.get('video_clip_json_path'):
-            st.error(tr("脚本文件不能为空"))
-            return
-        if not st.session_state.get('video_origin_path'):
-            st.error(tr("视频文件不能为空"))
-            return
+        # if not task_id:
+        #     st.error(tr("请先裁剪视频"))
+        #     return
+        # if not st.session_state.get('video_clip_json_path'):
+        #     st.error(tr("脚本文件不能为空"))
+        #     return
+        # if not st.session_state.get('video_origin_path'):
+        #     st.error(tr("视频文件不能为空"))
+        #     return
 
         st.toast(tr("生成视频"))
         logger.info(tr("开始生成视频"))

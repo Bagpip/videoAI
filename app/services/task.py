@@ -14,7 +14,13 @@ from app.services import (llm, material, subtitle, video, voice, audio_merger,
 from app.services import state as sm
 from app.utils import utils
 import streamlit as st
-from generate_merger import generate_video_tts_srt
+import sys
+
+_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(_dir)  # 直接添加当前目录
+
+import generate_merger
+import merger_videov2
 from subtitle_merger import parse_time,format_time
 
 
@@ -63,7 +69,7 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
             json.dump(list_script, file, ensure_ascii=False, indent=4)
         with open(voice_script_path, "r", encoding="utf-8") as file:
             list_script = json.load(file)
-        # task_id = task_id  # 任务ID（用于生成输出目录）
+        task_id = "test_video"  # 任务ID（用于生成输出目录）
         # voice_name = "zh-CN-XiaoxiaoNeural-Female"  # 中文女声语音
         # voice_rate = 1.0  # 语音速率（1.0为正常）
         # voice_pitch = 1.0  # 语音音高（1.0为正常）
@@ -152,15 +158,19 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
         # 获取视频目录列表
         video_list = [os.path.join(videos_path, f) for f in os.listdir(videos_path)
                        if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'))]
-        tts_path = os.path.join(parent_parent_dir, 'storage', 'tasks', 'video_story')
+        tts_path = os.path.join(parent_parent_dir, 'storage', 'tasks', task_id)
         # 获取音频和字幕列表
         tts_list = [os.path.join(tts_path, f) for f in os.listdir(tts_path)
                        if f.lower().endswith(('.mp3', '.wav'))]
         srt_list = [os.path.join(tts_path, f) for f in os.listdir(tts_path)
                        if f.lower().endswith('.srt')]
+
+        if len(video_list) != len(tts_list):
+            raise ValueError(f"视频和音频数量不匹配！视频: {len(video_list)}, 音频: {len(tts_list)}")
+
         chip_video_list = []
-        for index in len(range(video_list)):
-            chip_result = generate_video_tts_srt(video_origin_path = video_list[index],
+        for index in range(len(video_list)):
+            chip_result = generate_merger.generate_video_tts_srt(video_origin_path = video_list[index],
                                    tts_path = tts_list[index],
                                    task_id = index)
             chip_video_list.append(chip_result)
@@ -179,8 +189,8 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
             return output_path
 
         # 使用示例
-        output = simple_merge_mp3(tts_list, merged_audio_path)
-        print(f"合并完成，输出文件: {output}")
+        merged_audio_path = simple_merge_mp3(tts_list, os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_audio.mp3"))
+        print(f"合并完成，输出文件: {merged_audio_path}")
 
         import re
         from datetime import timedelta
@@ -235,6 +245,19 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
         srt_path = os.path.join(parent_parent_dir, 'resource', 'srt', 'merged.srt')
         merged_subtitle_path = merge_srt_files(srt_list, output_file=srt_path)
 
+        chip_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'clip_video')
+        chip_video_path = [os.path.join(chip_video_path, f) for f in os.listdir(chip_video_path)
+                       if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'))]
+        final_video_paths = []
+        combined_video_paths = []
+        combined_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_video_01.mp4")
+        combined_video_path = merger_videov2.merge_videos_without_audio(
+            output_video_path=combined_video_path,
+            video_paths=chip_video_path,
+            video_aspect=params.video_aspect
+        )
+        output_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_video_02.mp4")
+
 
 
 
@@ -278,30 +301,30 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
             merged_audio_path = ""
             merged_subtitle_path = ""
 
-    """
-    5. 合并视频
-    """
-    final_video_paths = []
-    combined_video_paths = []
+        """
+        5. 合并视频
+        """
+        final_video_paths = []
+        combined_video_paths = []
 
-    combined_video_path = path.join(utils.task_dir(task_id), f"merger.mp4")
-    logger.info(f"\n\n## 5. 合并视频: => {combined_video_path}")
-    # 如果 new_script_list 中没有 video，则使用 subclip_path_videos 中的视频
-    video_clips = [new_script['video'] if new_script.get('video') else subclip_path_videos.get(new_script.get('_id', '')) for new_script in new_script_list]
+        combined_video_path = path.join(utils.task_dir(task_id), f"merger.mp4")
+        logger.info(f"\n\n## 5. 合并视频: => {combined_video_path}")
+        # 如果 new_script_list 中没有 video，则使用 subclip_path_videos 中的视频
+        video_clips = [new_script['video'] if new_script.get('video') else subclip_path_videos.get(new_script.get('_id', '')) for new_script in new_script_list]
 
-    merger_video.combine_clip_videos(
-        output_video_path=combined_video_path,
-        video_paths=video_clips,
-        video_ost_list=video_ost,
-        video_aspect=params.video_aspect,
-        threads=params.n_threads
-    )
-    sm.state.update_task(task_id, state=const.TASK_STATE_PROCESSING, progress=80)
+        merger_video.combine_clip_videos(
+            output_video_path=combined_video_path,
+            video_paths=video_clips,
+            video_ost_list=video_ost,
+            video_aspect=params.video_aspect,
+            threads=params.n_threads
+        )
+        sm.state.update_task(task_id, state=const.TASK_STATE_PROCESSING, progress=80)
 
-    """
-    6. 合并字幕/BGM/配音/视频
-    """
-    output_video_path = path.join(utils.task_dir(task_id), f"combined.mp4")
+        """
+        6. 合并字幕/BGM/配音/视频
+        """
+        output_video_path = path.join(utils.task_dir(task_id), f"combined.mp4")
     logger.info(f"\n\n## 6. 最后一步: 合并字幕/BGM/配音/视频 -> {output_video_path}")
 
     # bgm_path = '/Users/apple/Desktop/home/NarratoAI/resource/songs/bgm.mp3'
