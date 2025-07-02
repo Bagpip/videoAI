@@ -69,7 +69,7 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
             json.dump(list_script, file, ensure_ascii=False, indent=4)
         with open(voice_script_path, "r", encoding="utf-8") as file:
             list_script = json.load(file)
-        task_id = "test_video"  # 任务ID（用于生成输出目录）
+
         # voice_name = "zh-CN-XiaoxiaoNeural-Female"  # 中文女声语音
         # voice_rate = 1.0  # 语音速率（1.0为正常）
         # voice_pitch = 1.0  # 语音音高（1.0为正常）

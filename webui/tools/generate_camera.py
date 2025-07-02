@@ -64,7 +64,7 @@ def generate_camera(tr, params) -> dict:
                     {
                         "type": "text",
                         "text": f"""
-                        你现在是一位专业的影视AI，请将根据小说文本描述生成影视内容，文本内容将包含以下几个方面
+                        你现在是一位专业的动画AI，请将根据小说文本描述生成动画内容，文本内容将包含以下几个方面
                         1、环境描写、人物特征、动态场景为： {background} 
                         2、镜头特写，视觉焦点为： {camera} 
                         3、详细的剧情描述为： {content} 
@@ -73,6 +73,8 @@ def generate_camera(tr, params) -> dict:
                         2、台词内容不要涉及时政（类似发展类字眼）；
                         3、女性角色不能出现关键部位裸露，不能出现不雅动作；
                         4、坚决不能出现对未成年人造成伤害的内容，例如：囚禁，伤害，辱骂，殴打，遗弃等；
+                        5、避免出现人物角色缺胳膊少腿问题；
+                        6、避免出现大面积血腥和凶器扎到人物身上的类似画面；
                         --rs {rs} --rt {rt} --dur {video_clip_duration} --fps {video_fps} --cf false --wm false --seed -1 
                         """
                     }

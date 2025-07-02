@@ -49,7 +49,7 @@ def generate_story(tr, params, story_clips_num, story_prompt) -> dict:
                             "background": "当前分镜的环境描写、人物特征、动态场景",
                             "camera": "镜头特写，视觉焦点",
                             "title": "分析当前场景剧情,给出剧情主题",
-                            "content": "根据小说内容，给出剧情讲解",
+                            "content": "根据小说内容，以写小说故事的形式给出剧情讲解",
                             "timestamp": "分镜时长，给出具体时间段，格式为xx:xx:xx,xxx-xx:xx:xx,xxx"
                         }
                     ]

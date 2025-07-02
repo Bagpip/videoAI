@@ -137,7 +137,7 @@ def render_generate_button():
 
         config.save_config()
         task_id = st.session_state.get('task_id')
-
+        task_id = "test6"
         # if not task_id:
         #     st.error(tr("请先裁剪视频"))
         #     return
