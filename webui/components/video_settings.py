@@ -15,9 +15,9 @@ def render_video_panel(tr):
                 if st.button(tr("生成视频片段"), key="generate_camera_bt", use_container_width=True):
                     generate_camera(tr, params, )
 
-            with button_cols[1]:
-                if st.button(tr("合成视频"), key="save_script", use_container_width=True):
-                    print(tr("<UNK>"))
+            # with button_cols[1]:
+            #     if st.button(tr("合成视频"), key="save_script", use_container_width=True):
+            #         print(tr("<UNK>"))
 
     else:
         with st.container(border=True):

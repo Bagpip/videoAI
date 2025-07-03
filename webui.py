@@ -137,10 +137,9 @@ def render_generate_button():
 
         config.save_config()
         task_id = st.session_state.get('task_id')
-        task_id = "test6"
-        # if not task_id:
-        #     st.error(tr("请先裁剪视频"))
-        #     return
+        if not task_id:
+            st.error(tr("输入本次任务名称"))
+            return
         # if not st.session_state.get('video_clip_json_path'):
         #     st.error(tr("脚本文件不能为空"))
         #     return

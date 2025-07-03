@@ -5,6 +5,7 @@ import time
 import traceback
 import streamlit as st
 from loguru import logger
+from tornado.process import task_id
 
 from app.config import config
 from app.models.schema import VideoClipParams
@@ -194,6 +195,12 @@ def render_video_file(tr, params):
 
 def render_story_details(tr):
 
+    task_id = st.text_area(
+        tr("任务名称"),
+        help=tr("输入任务名称"),
+        height=68
+    )
+
     story_clips_num = st.number_input(
         tr("自定义分镜数量"),
         min_value=1,
@@ -210,6 +217,7 @@ def render_story_details(tr):
     )
     st.session_state['story_clips_num'] = story_clips_num
     st.session_state['story_prompt'] = story_prompt
+    st.session_state['task_id'] = task_id
 
 
 def render_short_generate_options(tr):
