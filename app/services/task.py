@@ -15,10 +15,14 @@ from app.services import state as sm
 from app.utils import utils
 import streamlit as st
 import sys
-from generate_merger9_16 import AdvancedSlideshowGenerator
-
 _dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(_dir)  # 直接添加当前目录
+sys.path.append("generate_merger9_16.py")
+
+from generate_merger9_16 import AdvancedSlideshowGenerator
+import generate_merger9_16
+
+
 
 import generate_merger
 import merger_videov2
@@ -195,7 +199,7 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
         stroke_width = st.session_state.get('stroke_width', 1.5)
         custom_position = st.session_state.get('custom_position', 85.0)
 
-        generator = AdvancedSlideshowGenerator(
+        generator = generate_merger9_16.AdvancedSlideshowGenerator(
             output_quality='high',
             target_aspect=video_aspect,  # 可选: "9:16" 或 "16:9"
             outro_video_path=outro_video_path,  # 可选: 结尾视频路径

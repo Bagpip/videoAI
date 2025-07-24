@@ -12,6 +12,9 @@ from typing import List, Tuple, Optional, Union
 import contextlib  # 添加这行导入
 import shutil
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+import sys
+_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(_dir)  # 直接添加当前目录
 
 
 class AdvancedSlideshowGenerator:
