@@ -458,9 +458,12 @@ def render_video_gen_settings(tr):
     video_providers = [
         't2v',
         'sora',
-        'seedance']
+        'seedance',
+        'flux',
+        'irag'
+        ]
 
-    saved_video_provider = config.app.get("video_llm_provider", "seedance").lower()
+    saved_video_provider = config.app.get("video_llm_provider", "flux").lower()
     saved_provider_index = 0
 
     for i, provider in enumerate(video_providers):
@@ -521,6 +524,28 @@ def render_video_gen_settings(tr):
             tr("Video Model Name"),
             value=video_model_name or "seedance-1.0-pro",
             help="多镜头叙事模型"
+        )
+    elif video_provider == 'flux':
+        st_video_base_url = st.text_input(
+            tr("Video Base URL"),
+            value=video_base_url,
+            help="百度智能云"
+        )
+        st_video_model_name = st.text_input(
+            tr("Video Model Name"),
+            value=video_model_name,
+            help="免费引擎"
+        )
+    elif video_provider == 'irag':
+        st_video_base_url = st.text_input(
+            tr("Video Base URL"),
+            value=video_base_url,
+            help="百度智能云"
+        )
+        st_video_model_name = st.text_input(
+            tr("Video Model Name"),
+            value=video_model_name,
+            help="收费引擎"
         )
     else:
         st_video_base_url = st.text_input(tr("Video Base URL"), value=video_base_url)

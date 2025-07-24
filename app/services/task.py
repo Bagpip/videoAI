@@ -15,6 +15,7 @@ from app.services import state as sm
 from app.utils import utils
 import streamlit as st
 import sys
+from generate_merger9_16 import AdvancedSlideshowGenerator
 
 _dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(_dir)  # 直接添加当前目录
@@ -150,14 +151,18 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
     #             logger.warning(f"字幕文件无效: {merged_subtitle_path}")
     #
     # sm.state.update_task(task_id, state=const.TASK_STATE_PROCESSING, progress=40)
+
     if st.session_state.get('generate_video_setting'):
-        logger.info("\n\n## 3. 匹配视频音频长度")
+
         current_dir = os.path.dirname(os.path.abspath(__file__))
         parent_parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+        imgs_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'output_img', task_id)
+
         videos_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'output_videos')
         # 获取视频目录列表
         video_list = [os.path.join(videos_path, f) for f in os.listdir(videos_path)
                        if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'))]
+
         tts_path = os.path.join(parent_parent_dir, 'storage', 'tasks', task_id)
         # 获取音频和字幕列表
         tts_list = [os.path.join(tts_path, f) for f in os.listdir(tts_path)
@@ -165,98 +170,130 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
         srt_list = [os.path.join(tts_path, f) for f in os.listdir(tts_path)
                        if f.lower().endswith('.srt')]
 
-        if len(video_list) != len(tts_list):
-            raise ValueError(f"视频和音频数量不匹配！视频: {len(video_list)}, 音频: {len(tts_list)}")
+        # if len(video_list) != len(tts_list):
+        #     raise ValueError(f"视频和音频数量不匹配！视频: {len(video_list)}, 音频: {len(tts_list)}")
 
-        chip_video_list = []
-        for index in range(len(video_list)):
-            chip_result = generate_merger.generate_video_tts_srt(video_origin_path = video_list[index],
-                                   tts_path = tts_list[index],
-                                   task_id = index)
-            chip_video_list.append(chip_result)
+        # chip_video_list = []
+        # for index in range(len(video_list)):
+        #     chip_result = generate_merger.generate_video_tts_srt(video_origin_path = video_list[index],
+        #                            tts_path = tts_list[index],
+        #                            task_id = index)
+        #     chip_video_list.append(chip_result)
+
+        merged_audio_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_audio.mp3")
+        combined_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_silent_video.mp4")
 
 
-        logger.info("\n\n## 4. 合并音频和字幕")
-        from pydub import AudioSegment
+        merged_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_video.mp4")
+        outro_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', "9e27e2c1e41bcd3b1ddf2b32576de3d7.mp4")
+        final_output_with_bgm = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "final_output_video.mp4")
 
-        def simple_merge_mp3(files: list, output_path: str):
-            """简单合并多个MP3文件"""
-            combined = AudioSegment.empty()
-            for file in files:
-                sound = AudioSegment.from_mp3(file)
-                combined += sound
-            combined.export(output_path, format="mp3")
-            return output_path
+        video_aspect = st.session_state.get('video_aspect')
+        font_size = st.session_state.get('font_size', 28)
+        text_fore_color = st.session_state.get('text_fore_color', '#FFFFFF')
+        stroke_color = st.session_state.get('stroke_color', '#000000')
+        stroke_width = st.session_state.get('stroke_width', 1.5)
+        custom_position = st.session_state.get('custom_position', 85.0)
 
-        # 使用示例
-        merged_audio_path = simple_merge_mp3(tts_list, os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_audio.mp3"))
-        print(f"合并完成，输出文件: {merged_audio_path}")
+        generator = AdvancedSlideshowGenerator(
+            output_quality='high',
+            target_aspect=video_aspect,  # 可选: "9:16" 或 "16:9"
+            outro_video_path=outro_video_path,  # 可选: 结尾视频路径
+            text_overlay={
+                'text': 'AI文案视频 ，无真人肖像输入',
+                'font_size': 30,
+                'alpha': 0.75,
+                'color': (255, 255, 255),
+                'pos_x_ratio': 0.5,
+                'pos_y_ratio': 0.95,
+                'letter_spacing': 5
+            },
+            sticker_overlay={
+                'text': '免费小说',
+                'width': 540,  # 梯形下底宽度
+                'height': 60,  # 梯形高度（决定上底宽度）
+                'text_size': 24,
+                'text_color': (0, 0, 0)
+            },
+            subtitle_settings={
+                'font_size': font_size,  # 字幕字体大小
+                'color': text_fore_color,  # 字幕颜色(白色)
+                'outline_color': stroke_color,  # 描边颜色(黑色)
+                'outline_width': stroke_width,  # 描边宽度
+                'pos_x_ratio': 0.5,  # 水平位置(居中)
+                'pos_y_ratio': custom_position/100,  # 垂直位置(屏幕85%高度)
+                'alignment': 'center'  # 对齐方式
+            }
+        )
+        generator.generate(
+            image_folder=imgs_path,
+            audio_folder=tts_path,
+            output_video=merged_video_path,
+            max_workers=4,
+            # extract_audio_path=merged_audio_path,
+            # extract_silent_video_path=combined_video_path
+        )
 
-        import re
-        from datetime import timedelta
-        def merge_srt_files(srt_files, output_file="merged.srt"):
-            """合并多个 SRT 文件"""
-            merged_blocks = []
-            current_time = timedelta()
-            subtitle_index = 1
+        bgm_path = os.path.join(parent_parent_dir, 'resource', 'songs', 'bgm.mp3')  # 背景音乐路径
+        bgm_volume = params.bgm_volume  # 背景音乐音量，可以根据需要调整
 
-            for file in srt_files:
-                with open(file, 'r', encoding='utf-8') as f:
-                    content = f.read().strip()
+        if bgm_path and os.path.exists(bgm_path):
+            try:
+                # 使用FFmpeg合并背景音乐
+                ffmpeg_cmd = [
+                    'ffmpeg', '-y',
+                    '-i', merged_video_path,
+                    '-i', bgm_path,
+                    '-filter_complex',
+                    f'[0:a]volume=1.0[a0];[1:a]volume={bgm_volume},adelay=0|0[a1];[a0][a1]amix=inputs=2:duration=longest[a]',
+                    '-map', '0:v',
+                    '-map', '[a]',
+                    '-c:v', 'copy',
+                    '-c:a', 'aac',
+                    '-movflags', '+faststart',
+                    final_output_with_bgm
+                ]
+                subprocess.run(ffmpeg_cmd, check=True)
 
-                # 分割字幕块（以空行分隔）
-                blocks = re.split(r'\n\s*\n', content)
-
-                for block in blocks:
-                    lines = block.strip().split('\n')
-                    if len(lines) < 3:  # 确保是有效的字幕块
-                        continue
-
-                    # 解析时间轴
-                    time_line = lines[1]
-                    start_str, end_str = time_line.split(' --> ')
-                    start_time = parse_time(start_str)
-                    end_time = parse_time(end_str)
-
-                    # 调整时间（累加偏移量）
-                    new_start = current_time + start_time
-                    new_end = current_time + end_time
-
-                    # 重新编号并存储
-                    merged_blocks.append(
-                        f"{subtitle_index}\n"
-                        f"{format_time(new_start)} --> {format_time(new_end)}\n"
-                        + "\n".join(lines[2:])
-                    )
-                    subtitle_index += 1
-
-                # 更新当前时间（下一个文件的起始时间 = 当前文件的结束时间）
-                last_block = blocks[-1]
-                last_end_str = last_block.split('\n')[1].split(' --> ')[1]
-                current_time += parse_time(last_end_str)
-
-            # 写入合并后的文件
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write('\n\n'.join(merged_blocks))
-            return output_file
-
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        parent_parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
-        srt_path = os.path.join(parent_parent_dir, 'resource', 'srt', 'merged.srt')
-        merged_subtitle_path = merge_srt_files(srt_list, output_file=srt_path)
-
-        chip_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'clip_video')
-        chip_video_path = [os.path.join(chip_video_path, f) for f in os.listdir(chip_video_path)
-                       if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'))]
+                if os.path.exists(final_output_with_bgm) and os.path.getsize(final_output_with_bgm) > 0:
+                    output_video_path = final_output_with_bgm
+                    logger.info(f"已成功添加背景音乐，音量: {bgm_volume}")
+                else:
+                    logger.warning("添加背景音乐失败，使用原视频")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"添加背景音乐失败: {e.stderr}")
+                logger.warning("添加背景音乐失败，使用原视频")
         final_video_paths = []
         combined_video_paths = []
-        combined_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_video_01.mp4")
-        combined_video_path = merger_videov2.merge_videos_without_audio(
-            output_video_path=combined_video_path,
-            video_paths=chip_video_path,
-            video_aspect=params.video_aspect
-        )
-        output_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_video_02.mp4")
+        #logger.info("\n\n## 4. 合并音频和字幕")
+
+
+        # from pydub import AudioSegment
+        #
+        # def simple_merge_mp3(files: list, output_path: str):
+        #     """简单合并多个MP3文件"""
+        #     combined = AudioSegment.empty()
+        #     for file in files:
+        #         sound = AudioSegment.from_mp3(file)
+        #         combined += sound
+        #     combined.export(output_path, format="mp3")
+        #     return output_path
+        #
+        # # 使用示例
+        # merged_audio_path = simple_merge_mp3(tts_list, os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_audio.mp3"))
+        # print(f"合并完成，输出文件: {merged_audio_path}")
+
+        # chip_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'clip_video')
+        # chip_video_path = [os.path.join(chip_video_path, f) for f in os.listdir(chip_video_path)
+        #                if f.lower().endswith(('.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv'))]
+
+        # combined_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_video_01.mp4")
+        # combined_video_path = merger_videov2.merge_videos_without_audio(
+        #     output_video_path=combined_video_path,
+        #     video_paths=chip_video_path,
+        #     video_aspect=params.video_aspect
+        # )
+        # output_video_path = os.path.join(parent_parent_dir, 'storage', 'temp', 'merge', "merged_video_02.mp4")
 
 
 
@@ -325,33 +362,33 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
         6. 合并字幕/BGM/配音/视频
         """
         output_video_path = path.join(utils.task_dir(task_id), f"combined.mp4")
-    logger.info(f"\n\n## 6. 最后一步: 合并字幕/BGM/配音/视频 -> {output_video_path}")
+        logger.info(f"\n\n## 6. 最后一步: 合并字幕/BGM/配音/视频 -> {output_video_path}")
 
-    # bgm_path = '/Users/apple/Desktop/home/NarratoAI/resource/songs/bgm.mp3'
-    bgm_path = utils.get_bgm_file()
+        # bgm_path = '/Users/apple/Desktop/home/NarratoAI/resource/songs/bgm.mp3'
+        bgm_path = utils.get_bgm_file()
 
-    # 调用示例
-    options = {
-        'voice_volume': params.tts_volume,  # 配音音量
-        'bgm_volume': params.bgm_volume,  # 背景音乐音量
-        'original_audio_volume': params.original_volume,  # 视频原声音量，0表示不保留
-        'keep_original_audio': True,  # 是否保留原声
-        'subtitle_font': params.font_name,  # 这里使用相对字体路径，会自动在 font_dir() 目录下查找
-        'subtitle_font_size': params.font_size,
-        'subtitle_color': params.text_fore_color,
-        'subtitle_bg_color': None,  # 直接使用None表示透明背景
-        'subtitle_position': params.subtitle_position,
-        'custom_position': params.custom_position,
-        'threads': params.n_threads
-    }
-    generate_video.merge_materials(
-        video_path=combined_video_path,
-        audio_path=merged_audio_path,
-        subtitle_path=merged_subtitle_path,
-        bgm_path=bgm_path,
-        output_path=output_video_path,
-        options=options
-    )
+        # 调用示例
+        options = {
+            'voice_volume': params.tts_volume,  # 配音音量
+            'bgm_volume': params.bgm_volume,  # 背景音乐音量
+            'original_audio_volume': params.original_volume,  # 视频原声音量，0表示不保留
+            'keep_original_audio': True,  # 是否保留原声
+            'subtitle_font': params.font_name,  # 这里使用相对字体路径，会自动在 font_dir() 目录下查找
+            'subtitle_font_size': params.font_size,
+            'subtitle_color': params.text_fore_color,
+            'subtitle_bg_color': None,  # 直接使用None表示透明背景
+            'subtitle_position': params.subtitle_position,
+            'custom_position': params.custom_position,
+            'threads': params.n_threads
+        }
+        generate_video.merge_materials(
+            video_path=combined_video_path,
+            audio_path=merged_audio_path,
+            subtitle_path=merged_subtitle_path,
+            bgm_path=bgm_path,
+            output_path=output_video_path,
+            options=options
+        )
 
     final_video_paths.append(output_video_path)
     combined_video_paths.append(combined_video_path)

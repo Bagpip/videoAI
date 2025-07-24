@@ -77,31 +77,23 @@
 
     # 用于生成视频的大模型支持的提供商 (Supported providers):
 
-    video_llm_provider="Step-Video-T2V"
+    video_llm_provider="irag"
 
-    ########## OpenAI API Key
-    # Get your API key at https://platform.openai.com/api-keys
-    video_Step-Video-T2V_api_key = ""
-    video_Step-Video-T2V_base_url = "https://api.step-video.ai/v1"
-    video_Step-Video-T2V_model_name = "gpt-4.1-mini-2025-04-14"
 
-    # 使用 硅基流动 第三方 API Key，使用手机号注册：https://cloud.siliconflow.cn/i/pyOKqFCV
-    # 访问 https://cloud.siliconflow.cn/account/ak 获取你的 API 密钥
-    video_Open-Sora-Plan_api_key = ""
-    video_Open-Sora-Plan_base_url = "https://api.siliconflow.cn/v1"
-    video_Open-Sora-Plan_model_name = "deepseek-ai/DeepSeek-R1"
-
-    ########## DeepSeek API Key
+    ########## 豆包文生视频模型 Key
     # 访问 https://platform.deepseek.com/api_keys 获取你的 API 密钥
-    video_CogVideoX_api_key = ""
-    video_CogVideoX_base_url = "https://api.deepseek.com"
-    video_CogVideoX_model_name = "deepseek-chat"
+    video_seedance_api_key = ""
+    video_seedance_base_url = "https://ark.cn-beijing.volces.com/api/v3"
+    video_seedance_model_name = "doubao-seedance-1-0-pro-250528"
 
-    ########## DeepSeek API Key
-    # 访问 https://platform.deepseek.com/api_keys 获取你的 API 密钥
-    video_Seedance-Pro_api_key = ""
-    video_Seedance-Pro_base_url = "https://api.deepseek.com"
-    video_Seedance-Pro_model_name = "deepseek-chat"
+    ########## 百度智能云文生图模型
+    video_irag_api_key = ""
+    video_irag_base_url = "https://qianfan.baidubce.com/v2"
+    video_irag_model_name = "irag-1.0"
+
+    video_irag_api_key = ""
+    video_irag_base_url = "https://qianfan.baidubce.com/v2"
+    video_irag_model_name = "irag-1.0"
 
 
     # webui界面是否显示配置项

@@ -62,7 +62,7 @@ def render_script_file(tr, params):
     """渲染脚本文件选择"""
     script_list = [
         (tr("None"), ""),
-        (tr("电影分镜生成"), "storyboard"),
+        (tr("小说分析"), "storyboard"),
         (tr("Auto Generate"), "auto"),
         (tr("Short Generate"), "short"),
         (tr("Short Drama Summary"), "summary"),
@@ -201,21 +201,21 @@ def render_story_details(tr):
         height=68
     )
 
-    story_clips_num = st.number_input(
-        tr("自定义分镜数量"),
-        min_value=1,
-        max_value=30,
-        value=st.session_state.get('story_clips_num', 5),
-        help=tr("设置需要生成的分镜数量"),
-        key="custom_clips_input"
-    )
+    # story_clips_num = st.number_input(
+    #     tr("自定义分镜数量"),
+    #     min_value=1,
+    #     max_value=30,
+    #     value=st.session_state.get('story_clips_num', 5),
+    #     help=tr("设置需要生成的分镜数量"),
+    #     key="custom_clips_input"
+    # )
 
     story_prompt = st.text_area(
         tr("文章输入"),
         help=tr("小说内容输入"),
         height=180
     )
-    st.session_state['story_clips_num'] = story_clips_num
+    # st.session_state['story_clips_num'] = story_clips_num
     st.session_state['story_prompt'] = story_prompt
     st.session_state['task_id'] = task_id
 

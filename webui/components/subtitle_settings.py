@@ -52,11 +52,11 @@ def render_font_settings(tr):
         st.session_state['text_fore_color'] = text_fore_color
 
     with font_cols[1]:
-        saved_font_size = config.ui.get("font_size", 60)
+        saved_font_size = config.ui.get("font_size", 28)
         font_size = st.slider(
             tr("Font Size"),
-            min_value=20,
-            max_value=100,
+            min_value=10,
+            max_value=50,
             value=saved_font_size
         )
         config.ui["font_size"] = font_size
@@ -125,7 +125,7 @@ def get_subtitle_params():
     return {
         'subtitle_enabled': st.session_state.get('subtitle_enabled', True),
         'font_name': st.session_state.get('font_name', ''),
-        'font_size': st.session_state.get('font_size', 60),
+        'font_size': st.session_state.get('font_size', 28),
         'text_fore_color': st.session_state.get('text_fore_color', '#FFFFFF'),
         'subtitle_position': st.session_state.get('subtitle_position', 'bottom'),
         'custom_position': st.session_state.get('custom_position', 70.0),
