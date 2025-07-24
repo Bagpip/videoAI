@@ -848,19 +848,40 @@ if __name__ == "__main__":
     # )
 
     final_video = r"D:\newbegin\NarratoAI\output_video006.mp4"
-    final_output_with_bgm = r"D:\newbegin\NarratoAI\output_video007.mp4"
+    final_output_with_bgm = r"D:\newbegin\NarratoAI\output_video008.mp4"
     bgm_path = r"D:\newbegin\NarratoAI\resource\songs\bgm.mp3"  # 背景音乐路径
     bgm_volume = 0.2  # 背景音乐音量，可以根据需要调整
 
     if bgm_path and os.path.exists(bgm_path):
         try:
+            # 获取视频时长
+            video_duration = float(subprocess.check_output([
+                'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                '-of', 'default=noprint_wrappers=1:nokey=1', final_video
+            ]).decode('utf-8').strip())
+
+            # 获取BGM时长
+            bgm_duration = float(subprocess.check_output([
+                'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                '-of', 'default=noprint_wrappers=1:nokey=1', bgm_path
+            ]).decode('utf-8').strip())
+
+            # 构建BGM处理命令
+            bgm_filter = ''
+            if bgm_duration < video_duration:
+                # BGM不足时循环播放
+                loop_times = int(math.ceil(video_duration / bgm_duration))
+                bgm_filter = f'[1:a]volume={bgm_volume},aloop=loop={loop_times}:size=2*44100*{bgm_duration}[a1];[0:a][a1]amix=inputs=2:duration=longest[a]'
+            else:
+                # BGM过长时截断
+                bgm_filter = f'[1:a]volume={bgm_volume},atrim=0:{video_duration}[a1];[0:a][a1]amix=inputs=2:duration=longest[a]'
+
             # 使用FFmpeg合并背景音乐
             ffmpeg_cmd = [
                 'ffmpeg', '-y',
                 '-i', final_video,
                 '-i', bgm_path,
-                '-filter_complex',
-                f'[0:a]volume=1.0[a0];[1:a]volume={bgm_volume},adelay=0|0[a1];[a0][a1]amix=inputs=2:duration=longest[a]',
+                '-filter_complex', bgm_filter,
                 '-map', '0:v',
                 '-map', '[a]',
                 '-c:v', 'copy',
@@ -877,5 +898,8 @@ if __name__ == "__main__":
                 logger.warning("添加背景音乐失败，使用原视频")
         except subprocess.CalledProcessError as e:
             logger.error(f"添加背景音乐失败: {e.stderr}")
+            logger.warning("添加背景音乐失败，使用原视频")
+        except Exception as e:
+            logger.error(f"处理BGM时出错: {str(e)}")
             logger.warning("添加背景音乐失败，使用原视频")
 

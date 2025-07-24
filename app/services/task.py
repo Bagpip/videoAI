@@ -18,7 +18,7 @@ import sys
 _dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(_dir)  # 直接添加当前目录
 sys.path.append("generate_merger9_16.py")
-
+import subprocess
 from generate_merger9_16 import AdvancedSlideshowGenerator
 import generate_merger9_16
 
@@ -243,13 +243,34 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
 
         if bgm_path and os.path.exists(bgm_path):
             try:
+                # 获取视频时长
+                video_duration = float(subprocess.check_output([
+                    'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                    '-of', 'default=noprint_wrappers=1:nokey=1', merged_video_path
+                ]).decode('utf-8').strip())
+
+                # 获取BGM时长
+                bgm_duration = float(subprocess.check_output([
+                    'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+                    '-of', 'default=noprint_wrappers=1:nokey=1', bgm_path
+                ]).decode('utf-8').strip())
+
+                # 构建BGM处理命令
+                bgm_filter = ''
+                if bgm_duration < video_duration:
+                    # BGM不足时循环播放
+                    loop_times = int(math.ceil(video_duration / bgm_duration))
+                    bgm_filter = f'[1:a]volume={bgm_volume},aloop=loop={loop_times}:size=2*44100*{bgm_duration}[a1];[0:a][a1]amix=inputs=2:duration=longest[a]'
+                else:
+                    # BGM过长时截断
+                    bgm_filter = f'[1:a]volume={bgm_volume},atrim=0:{video_duration}[a1];[0:a][a1]amix=inputs=2:duration=longest[a]'
+
                 # 使用FFmpeg合并背景音乐
                 ffmpeg_cmd = [
                     'ffmpeg', '-y',
                     '-i', merged_video_path,
                     '-i', bgm_path,
-                    '-filter_complex',
-                    f'[0:a]volume=1.0[a0];[1:a]volume={bgm_volume},adelay=0|0[a1];[a0][a1]amix=inputs=2:duration=longest[a]',
+                    '-filter_complex', bgm_filter,
                     '-map', '0:v',
                     '-map', '[a]',
                     '-c:v', 'copy',
@@ -263,10 +284,15 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
                     output_video_path = final_output_with_bgm
                     logger.info(f"已成功添加背景音乐，音量: {bgm_volume}")
                 else:
+                    output_video_path = merged_video_path
                     logger.warning("添加背景音乐失败，使用原视频")
             except subprocess.CalledProcessError as e:
                 logger.error(f"添加背景音乐失败: {e.stderr}")
                 logger.warning("添加背景音乐失败，使用原视频")
+            except Exception as e:
+                logger.error(f"处理BGM时出错: {str(e)}")
+                logger.warning("添加背景音乐失败，使用原视频")
+
         final_video_paths = []
         combined_video_paths = []
         #logger.info("\n\n## 4. 合并音频和字幕")
