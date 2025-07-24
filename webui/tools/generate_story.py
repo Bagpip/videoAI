@@ -31,7 +31,7 @@ def generate_story(tr, params, story_clips_num, story_prompt) -> dict:
         text_api_key = config.app.get(f'text_{text_provider}_api_key')
         text_model = config.app.get(f'text_{text_provider}_model_name')
         text_base_url = config.app.get(f'text_{text_provider}_base_url')
-        video_style = st.session_state.get('video_style', 24)
+        video_style = st.session_state.get('video_style', '治愈动漫')
 
         client = OpenAI(
             base_url=text_base_url,
@@ -65,19 +65,19 @@ def generate_story(tr, params, story_clips_num, story_prompt) -> dict:
                         
                         3. **输出格式**：
                         请返回一个JSON对象，为每段内容生成包含一个名为"plot_titles"的数组，数组中包含多个对象，每个对象都要包含以下字段：
-                       {
+                       {{
                            "plot_titles": [
-                               {
-                                   "background": "场景描写",
+                               {{
+                                   "background": "场景描写，确保没有敏感词汇，并加入提示词强调图片风格为{video_style}",
                                    "background_en": "场景描写的英文翻译，确保没有敏感词汇，并加入提示词强调图片风格为{video_style}",
                                    "title": "分析当前场景剧情,给出剧情主题",
                                    "content": "解说字幕",
                                    "timestamp": "解说时长，给出具体时间段，格式为xx:xx:xx,xxx-xx:xx:xx,xxx"
-                               }
+                               }}
                            ]
-                       }
+                       }}
                         4.请确保返回的是合法的JSON格式。 
-                       """  # % (story_clips_num, story_clips_num)
+                       """
             },
             {
                 "role": "user",
