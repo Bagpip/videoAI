@@ -18,9 +18,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="auto",
     menu_items={
-        "Report a bug": "https://github.com/linyqh/NarratoAI/issues",
-        'About': f"# Narrato:blue[AI] :sunglasses: 📽️ \n #### Version: v{config.project_version} \n "
-                 f"自动化影视解说视频详情请移步：https://github.com/linyqh/NarratoAI"
+        "Report a bug": "https://github.com/Bagpip/videoAI",
+        'About': f"# blue[M]:axinova:sunglasses: 📽️ \n "
     },
 )
 
@@ -213,21 +212,57 @@ def main():
     except Exception as e:
         logger.warning(f"资源初始化时出现警告: {e}")
 
-    st.title(f"Narrato:blue[AI]:sunglasses: 📽️")
-    st.write(tr("Get Help"))
+    # st.title(f"blue[AI]:Maxinova:sunglasses: 📽️")
+
+    st.markdown("""
+    <style>
+        .maxinova-title {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #000000, #1A1A1A);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;  /* 内容居中 */
+            margin: 0 auto;     /* 水平居中 */
+            width: fit-content; /* 宽度适应内容 */
+        }
+        .maxinova-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+    </style>
+
+    <div class="maxinova-container">
+        <div class="maxinova-title">
+            <span style="color: #FF4D4D">M</span>
+            <span style="color: #FFA64D">a</span>
+            <span style="color: #FFD24D">x</span>
+            <span style="color: #4DFF4D">i</span>
+            <span style="color: #4DD2FF">n</span>
+            <span style="color: #4D4DFF">o</span>
+            <span style="color: #D24DFF">v</span>
+            <span style="color: #FF4DA6">a</span>
+            <span style="color: white"> 🎞️</span>  
+            <span style="color: white"> 玛仙影视 </span> 
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    # st.write(tr("Get Help"))
 
     # 首先渲染不依赖PyTorch的UI部分
     # 渲染基础设置面板
     basic_settings.render_basic_settings(tr)
     # 渲染合并设置
-    merge_settings.render_merge_settings(tr)
+    # merge_settings.render_merge_settings(tr)
 
     # 渲染主面板
     panel = st.columns(3)
     with panel[0]:
         script_settings.render_script_panel(tr)
-    with panel[1]:
         video_settings.render_video_panel(tr)
+    with panel[1]:
         audio_settings.render_audio_panel(tr)
     with panel[2]:
         subtitle_settings.render_subtitle_panel(tr)

@@ -26,11 +26,12 @@ def render_script_panel(tr):
         # 渲染脚本文件选择
         render_script_file(tr, params)
 
-        # 渲染视频文件选择
-        render_video_file(tr, params)
-
         # 获取当前选择的脚本类型
         script_path = st.session_state.get('video_clip_json_path', '')
+
+        if script_path != "storyboard":
+            # 渲染视频文件选择
+            render_video_file(tr, params)
 
         # 根据脚本类型显示不同的布局
         if script_path == "storyboard":
@@ -61,7 +62,7 @@ def render_script_panel(tr):
 def render_script_file(tr, params):
     """渲染脚本文件选择"""
     script_list = [
-        (tr("None"), ""),
+
         (tr("小说分析"), "storyboard"),
         (tr("Auto Generate"), "auto"),
         (tr("Short Generate"), "short"),

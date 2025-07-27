@@ -34,7 +34,3 @@ resource/srt/*.srt
 app/models/faster-whisper-large-v2/*
 app/models/faster-whisper-large-v3/*
 app/models/bert/*
-
-README-en.md
-README-ja.md
-README.md

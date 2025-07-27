@@ -238,7 +238,8 @@ def start_subclip(task_id: str, params: VideoClipParams, subclip_path_videos: di
             # extract_silent_video_path=combined_video_path
         )
 
-        bgm_path = os.path.join(parent_parent_dir, 'resource', 'songs', 'bgm.mp3')  # 背景音乐路径
+        # bgm_path = os.path.join(parent_parent_dir, 'resource', 'songs', 'bgm.mp3')  # 背景音乐路径
+        bgm_path = st.session_state.get('bgm_file')
         bgm_volume = params.bgm_volume  # 背景音乐音量，可以根据需要调整
 
         if bgm_path and os.path.exists(bgm_path):

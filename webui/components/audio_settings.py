@@ -160,7 +160,7 @@ def render_voice_preview(tr, voice_name):
                 if os.path.exists(audio_file):
                     os.remove(audio_file)
 
-
+'''
 def render_bgm_settings(tr):
     """渲染背景音乐设置"""
     # 背景音乐选项
@@ -197,7 +197,65 @@ def render_bgm_settings(tr):
         help=tr("Adjust the volume of the original audio")
     )
     st.session_state['bgm_volume'] = bgm_volume
+'''
 
+
+def render_bgm_settings(tr):
+    """渲染背景音乐设置"""
+    # 获取songs目录下的所有音乐文件
+    songs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'resource', 'songs')
+    bgm_files = []
+
+    if os.path.exists(songs_dir):
+        bgm_files = [
+            f for f in os.listdir(songs_dir)
+            if f.lower().endswith(('.mp3', '.wav', '.ogg', '.m4a'))
+        ]
+
+    # 背景音乐选项
+    bgm_options = [
+        (tr("No Background Music"), ""),
+        (tr("Random Background Music"), "random"),
+    ]
+
+    # 添加可用的音乐文件选项
+    for bgm_file in bgm_files:
+        bgm_options.append((bgm_file, os.path.join(songs_dir, bgm_file)))
+
+    # 获取当前选择的背景音乐
+    current_bgm = st.session_state.get('bgm_file', '')
+    current_index = 0  # 默认无背景音乐
+
+    # 查找当前选择的索引
+    for i, (_, path) in enumerate(bgm_options):
+        if path == current_bgm:
+            current_index = i
+            break
+
+    # 创建下拉菜单选择背景音乐
+    selected_index = st.selectbox(
+        tr("Background Music"),
+        index=current_index,
+        options=range(len(bgm_options)),
+        format_func=lambda x: bgm_options[x][0],
+        help=tr("背景音乐放置在resource/songs目录下")
+    )
+
+    # 保存选择的背景音乐
+    bgm_type = "custom" if selected_index > 1 else bgm_options[selected_index][1]
+    st.session_state['bgm_type'] = bgm_type
+    st.session_state['bgm_file'] = bgm_options[selected_index][1]
+
+    # 背景音乐音量
+    bgm_volume = st.slider(
+        tr("Background Music Volume"),
+        min_value=0.0,
+        max_value=1.0,
+        value=st.session_state.get('bgm_volume', 0.3),
+        step=0.01,
+        help=tr("Adjust the volume of the background music")
+    )
+    st.session_state['bgm_volume'] = bgm_volume
 
 def get_audio_params():
     """获取音频参数"""

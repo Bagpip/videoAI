@@ -176,8 +176,8 @@ def render_generate_video_config(params):
 
     if config.app.get("video_llm_provider", "flux")=="flux" or config.app.get("video_llm_provider", "flux")=="irag":
         video_qualities = [
-            ("16:9推荐", "1024x768"),
             ("9:16推荐", "768x1024"),
+            ("16:9推荐", "1024x768"),
             ("适用头像768x768", "768x768"),
             ("适用海报传单2048x2048", "2048x2048"),
             ("适用电脑壁纸2048x1152", "2048x1152"),
